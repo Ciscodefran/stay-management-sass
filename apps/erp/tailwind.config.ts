@@ -1,0 +1,33 @@
+import type { Config } from 'tailwindcss';
+import sharedConfig from '@repo/ui/tailwind.config';
+
+const config: Config = {
+  content: [
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    '../../packages/ui/src/**/*.{js,ts,jsx,tsx}',
+  ],
+  presets: [sharedConfig],
+  theme: {
+    extend: {
+      // ERP 앱 전용 커스터마이징
+      colors: {
+        brand: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+          950: '#082f49',
+        },
+      },
+    },
+  },
+};
+
+export default config;
