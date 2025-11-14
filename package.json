@@ -9,7 +9,12 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "clean": "turbo run clean",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "db:generate": "pnpm --filter @stay/db db:generate",
+    "db:migrate": "pnpm --filter @stay/db db:migrate",
+    "db:push": "pnpm --filter @stay/db db:push",
+    "db:studio": "pnpm --filter @stay/db db:studio",
+    "db:seed": "pnpm --filter @stay/db db:seed"
   },
   "devDependencies": {
     "@turbo/gen": "^2.3.3",
