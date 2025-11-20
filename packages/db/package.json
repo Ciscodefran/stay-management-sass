@@ -27,7 +27,6 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "drizzle-kit": "^0.28.1",
-    "dotenv": "^16.4.0"
+    "drizzle-kit": "^0.28.1"
   }
 }

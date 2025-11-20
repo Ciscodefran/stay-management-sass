@@ -1,12 +1,24 @@
 /**
- * 데이터베이스 스키마 정의
+ * Schema-only exports - safe for all apps including React Native
  *
- * 이 파일에서 모든 테이블 스키마를 export합니다.
- *
- * 예시:
- * export * from './users';
- * export * from './properties';
- * export * from './bookings';
+ * This entry point exports ONLY schema definitions and TypeScript types.
+ * It does NOT export the Drizzle database instance.
  */
 
-// 사용자가 스키마를 작성하면 여기서 export합니다.
+// IAM Schema
+export * from './iam';
+
+// Org Schema
+export * from './org';
+
+// Biz Schema
+export * from './biz';
+
+// Ref Schema
+export * from './ref';
+
+// Pub Schema
+export * from './pub';
+
+// Utilities
+export * from '../lib/types';

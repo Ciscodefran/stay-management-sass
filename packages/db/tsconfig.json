@@ -1,12 +1,17 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
+    // 빌드 출력 설정
     "outDir": "./dist",
     "rootDir": "./src",
-    "composite": true,
+    "noEmit": false,
+
+    // 타입 정의 생성 (다른 패키지에서 import 시 필요)
     "declaration": true,
     "declarationMap": true,
-    "noEmit": false
+
+    // 프로젝트 참조 지원 (Turborepo 최적화)
+    "composite": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "src/migrations"]
