@@ -11,8 +11,15 @@
     "clean": "turbo run clean",
     "type-check": "turbo run type-check"
   },
+  "dependencies": {
+    "next": "^16.0.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
   "devDependencies": {
     "@turbo/gen": "^2.3.3",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
     "eslint": "^9.17.0",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2"
