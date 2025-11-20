@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@turbo/gen": "^2.3.3",
+    "eslint": "^9.17.0",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2"
   },
