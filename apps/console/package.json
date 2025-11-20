@@ -12,6 +12,7 @@
     "clean": "rm -rf .next node_modules"
   },
   "dependencies": {
+    "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*"
   },
   "devDependencies": {
