@@ -60,9 +60,6 @@ importers:
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.18
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
 
   apps/erp:
     dependencies:
@@ -106,9 +103,6 @@ importers:
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.18
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
 
   packages/eslint-config:
     dependencies:
@@ -175,9 +169,6 @@ importers:
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.18
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
 
 packages:
 
