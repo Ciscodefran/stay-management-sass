@@ -1,6 +1,6 @@
 # Stay Management SaaS
 
-Turborepo 기반 모노레포 프로젝트
+Turborepo 기반 모노레포 프로젝트 - Supabase + Drizzle ORM을 활용한 숙박 관리 플랫폼
 
 ## 🚀 배포된 애플리케이션
 
@@ -19,9 +19,11 @@ stay-management-sass/
 │                               # 🌐 https://stay-management-sass-console.vercel.app/
 │                               # 🏠 http://localhost:3001
 ├── packages/
+│   ├── db/                     # Drizzle ORM 기반 데이터베이스 패키지
 │   ├── eslint-config/          # ESLint 공유 설정 (포매팅 포함)
 │   ├── typescript-config/      # TypeScript 공유 설정
 │   └── ui/                     # Radix UI 기반 공유 컴포넌트
+├── supabase/                   # Supabase 로컬 개발 환경 설정
 ├── turbo.json                  # Turborepo 설정
 ├── pnpm-workspace.yaml         # PNPM 워크스페이스
 └── package.json                # 루트 package.json
@@ -29,13 +31,24 @@ stay-management-sass/
 
 ## 기술 스택
 
+### Core
 - **빌드 시스템**: Turborepo
 - **패키지 관리자**: PNPM (v9.15.0+)
-- **프레임워크**: Next.js 15
+- **프레임워크**: Next.js 16
 - **언어**: TypeScript 5.7
-- **스타일링**: Tailwind CSS
+- **런타임**: Node.js 20+
+
+### Database & Backend
+- **데이터베이스**: PostgreSQL (via Supabase)
+- **ORM**: Drizzle ORM 0.36
+- **백엔드 서비스**: Supabase (Auth, Storage, Realtime)
+- **커넥션 풀링**: postgres (node-postgres)
+
+### Frontend
+- **스타일링**: Tailwind CSS 3.4
 - **UI 컴포넌트**: Radix UI
-- **린팅**: ESLint (포매팅 포함)
+- **CSS 후처리**: PostCSS
+- **린팅**: ESLint 9 (포매팅 포함)
 
 ## 시작하기
 
@@ -43,6 +56,7 @@ stay-management-sass/
 
 - Node.js >= 20.0.0
 - PNPM >= 9.0.0
+- Supabase CLI (로컬 개발용)
 
 ### 설치
 
@@ -50,9 +64,52 @@ stay-management-sass/
 # PNPM 설치 (없는 경우)
 npm install -g pnpm
 
+# Supabase CLI 설치 (macOS)
+brew install supabase/tap/supabase
+
 # 의존성 설치
 pnpm install
 ```
+
+### Supabase 로컬 개발 환경 설정
+
+```bash
+# Supabase 로컬 서버 시작 (Docker 필요)
+supabase start
+
+# Supabase 상태 확인
+supabase status
+
+# 출력 예시:
+#   API URL: http://127.0.0.1:54321
+#   Database URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+#   Studio URL: http://127.0.0.1:54323
+```
+
+### 환경 변수 설정
+
+```bash
+# 1. DB 패키지 환경 변수 (Drizzle CLI용)
+cd packages/db
+cp .env.example .env
+
+# 2. 각 앱의 환경 변수는 이미 생성되어 있음
+# apps/console/.env.local
+# apps/erp/.env.local
+```
+
+**필수 환경 변수**:
+```env
+# Database 연결 (Drizzle ORM)
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+
+# Supabase API
+NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="your-publishable-key"
+SUPABASE_SECRET_KEY="your-secret-key"
+```
+
+> 💡 환경 변수 값은 `supabase status` 명령어로 확인할 수 있습니다.
 
 ### 개발 서버 실행
 
@@ -63,6 +120,25 @@ pnpm dev
 # 특정 앱만 실행
 pnpm --filter erp dev      # ERP 앱 (http://localhost:3000)
 pnpm --filter console dev  # Console 앱 (http://localhost:3001)
+```
+
+### 데이터베이스 작업
+
+```bash
+# DB 패키지로 이동
+cd packages/db
+
+# 스키마 변경 후 마이그레이션 파일 생성
+pnpm db:generate
+
+# 스키마를 DB에 직접 푸시 (개발 환경)
+pnpm db:push
+
+# Drizzle Studio 실행 (DB 관리 GUI)
+pnpm db:studio
+
+# 마이그레이션 삭제
+pnpm db:drop
 ```
 
 ### 빌드
@@ -126,6 +202,50 @@ pnpm clean
 
 ### Packages
 
+#### @repo/db
+Drizzle ORM 기반 데이터베이스 패키지
+
+**특징**:
+- PostgreSQL + Supabase 통합
+- 타입 안전한 쿼리 빌더
+- 자동 마이그레이션 생성
+- 커넥션 풀링 내장 (postgres)
+- Drizzle Studio GUI 지원
+
+**구조**:
+```
+packages/db/
+├── src/
+│   ├── index.ts           # 메인 export
+│   ├── client.ts          # Drizzle 클라이언트 (커넥션 풀)
+│   ├── schema/            # 테이블 스키마 정의
+│   │   └── index.ts
+│   └── migrations/        # 자동 생성된 마이그레이션
+├── drizzle.config.ts      # Drizzle Kit 설정
+└── package.json
+```
+
+**사용 방법**:
+```typescript
+// 앱에서 DB 사용
+import { db, eq } from '@repo/db';
+import { users } from '@repo/db/schema';
+
+// SELECT
+const allUsers = await db.select().from(users);
+
+// INSERT
+const newUser = await db.insert(users).values({
+  email: 'user@example.com',
+  name: 'John Doe',
+}).returning();
+
+// UPDATE
+await db.update(users)
+  .set({ name: 'Jane Doe' })
+  .where(eq(users.email, 'user@example.com'));
+```
+
 #### @repo/eslint-config
 ESLint 공유 설정 패키지 (포매팅 포함)
 - `base.js`: 기본 ESLint 규칙 + 포매팅 규칙
@@ -164,6 +284,41 @@ const className = cn('text-primary', 'font-bold');
 
 ## 개발 가이드
 
+### 데이터베이스 스키마 작성
+
+1. `packages/db/src/schema/`에 새 스키마 파일 생성
+
+```typescript
+// packages/db/src/schema/properties.ts
+import { pgTable, uuid, varchar, timestamp, integer } from 'drizzle-orm/pg-core';
+
+export const properties = pgTable('properties', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }).notNull(),
+  address: varchar('address', { length: 500 }),
+  roomCount: integer('room_count').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export type Property = typeof properties.$inferSelect;
+export type NewProperty = typeof properties.$inferInsert;
+```
+
+2. `packages/db/src/schema/index.ts`에 export 추가
+
+```typescript
+export * from './properties';
+```
+
+3. 마이그레이션 생성 및 적용
+
+```bash
+cd packages/db
+pnpm db:generate  # 마이그레이션 파일 생성
+pnpm db:push      # DB에 적용
+```
+
 ### 새 컴포넌트 추가
 
 1. `packages/ui/src/components/ui/`에 컴포넌트 파일 생성
@@ -182,10 +337,10 @@ pnpx create-next-app@latest new-app --typescript --tailwind --app
 
 # 공유 패키지 추가
 cd new-app
-pnpm add @repo/ui@workspace:* -D @repo/eslint-config@workspace:* \
-  @repo/typescript-config@workspace:*
+pnpm add @repo/db@workspace:* @repo/ui@workspace:*
+pnpm add -D @repo/eslint-config@workspace:* @repo/typescript-config@workspace:*
 
-# tsconfig.json, .eslintrc.js, tailwind.config.ts 설정
+# tsconfig.json, eslint.config.mjs, tailwind.config.ts 설정
 # (기존 앱 참고)
 ```
 
@@ -200,7 +355,61 @@ pnpm add -w <package-name>
 
 # 개발 의존성 추가
 pnpm --filter console add -D <package-name>
+
+# DB 패키지에 의존성 추가
+pnpm --filter @repo/db add <package-name>
 ```
+
+## 기술 상세 설명
+
+### Turborepo 캐싱
+
+이 프로젝트는 Turborepo의 캐싱 기능을 활용하여 빌드 속도를 최적화합니다.
+
+**환경 변수 캐시 무효화**:
+```json
+{
+  "globalEnv": [
+    "DATABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    "SUPABASE_SECRET_KEY"
+  ]
+}
+```
+
+이 환경 변수들이 변경되면 자동으로 캐시가 무효화되어 재빌드됩니다.
+
+### Drizzle ORM
+
+**커넥션 풀링**:
+```typescript
+// packages/db/src/client.ts
+const client = postgres(connectionString, {
+  max: 10,           // 최대 10개 연결
+  idle_timeout: 20,  // 20초 idle 타임아웃
+  connect_timeout: 10, // 10초 연결 타임아웃
+  prepare: false,    // Supabase 권장 설정
+});
+```
+
+**타입 안전성**:
+- 스키마에서 자동으로 TypeScript 타입 추론
+- 컴파일 타임에 쿼리 유효성 검증
+- IDE 자동완성 지원
+
+### Supabase
+
+**로컬 개발 환경**:
+- Docker 기반 로컬 PostgreSQL
+- Auth, Storage, Realtime 서비스 포함
+- Studio GUI (http://127.0.0.1:54323)
+
+**사용 가능한 서비스**:
+- **Database**: PostgreSQL 17 (Drizzle ORM으로 접근)
+- **Auth**: 사용자 인증 및 권한 관리
+- **Storage**: MinIO 기반 파일 스토리지
+- **Realtime**: WebSocket 기반 실시간 구독
 
 ## 린팅 규칙
 
@@ -223,6 +432,17 @@ pnpm lint:fix
 
 ## 문제 해결
 
+### Supabase 연결 실패
+
+```bash
+# Supabase 재시작
+supabase stop
+supabase start
+
+# 상태 확인
+supabase status
+```
+
 ### pnpm install 실패
 
 ```bash
@@ -240,6 +460,19 @@ pnpm type-check
 
 # Next.js 타입 재생성
 pnpm --filter erp dev  # 개발 서버 실행 시 자동 생성
+```
+
+### Database 마이그레이션 실패
+
+```bash
+# Drizzle Studio에서 수동 확인
+cd packages/db
+pnpm db:studio
+
+# 마이그레이션 재생성
+rm -rf src/migrations
+pnpm db:generate
+pnpm db:push
 ```
 
 ### ESLint 에러
@@ -301,6 +534,14 @@ git push
 - **Output Directory**: `.next`
 - **Framework**: Next.js
 
+**환경 변수 설정** (Vercel):
+```
+DATABASE_URL=<Supabase Production URL>
+NEXT_PUBLIC_SUPABASE_URL=<Supabase Project URL>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<Supabase Anon Key>
+SUPABASE_SECRET_KEY=<Supabase Service Role Key>
+```
+
 #### 배포 프로세스
 
 1. **자동 배포**: `main` 브랜치에 푸시하면 자동으로 배포됩니다.
@@ -324,9 +565,18 @@ MIT License
 
 ## 참고 자료
 
+### Core
 - [Turborepo 문서](https://turbo.build/repo/docs)
 - [Next.js 문서](https://nextjs.org/docs)
 - [PNPM 문서](https://pnpm.io/)
+- [TypeScript 문서](https://www.typescriptlang.org/docs/)
+
+### Database & Backend
+- [Supabase 문서](https://supabase.com/docs)
+- [Drizzle ORM 문서](https://orm.drizzle.team/docs/overview)
+- [PostgreSQL 문서](https://www.postgresql.org/docs/)
+
+### Frontend
 - [Radix UI 문서](https://www.radix-ui.com/docs/primitives)
 - [Tailwind CSS 문서](https://tailwindcss.com/docs)
-- [TypeScript 문서](https://www.typescriptlang.org/docs/)
+- [shadcn/ui 문서](https://ui.shadcn.com/)
