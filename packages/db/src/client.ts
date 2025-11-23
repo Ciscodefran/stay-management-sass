@@ -1,106 +1,74 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import * as schema from './schema';
 import * as iamSchema from './schema/iam';
 import * as orgSchema from './schema/org';
 import * as bizSchema from './schema/biz';
 import * as refSchema from './schema/ref';
 
 /**
- * DATABASE_URL 환경 변수로부터 Drizzle 클라이언트를 생성합니다.
- *
- * 각 앱에서 .env.local에 DATABASE_URL을 설정하면
- * 해당 Supabase 인스턴스에 연결됩니다.
+ * 전역 PostgreSQL 클라이언트
+ * Vercel Fluid Compute에서 동일 인스턴스 내 재사용됨
  */
-const getDatabaseUrl = (): string => {
-  const url = process.env.DATABASE_URL;
-
-  if (!url) {
-    throw new Error(
-      'DATABASE_URL 환경 변수가 설정되지 않았습니다.\n' +
-      '앱의 .env.local 파일에 DATABASE_URL을 추가해주세요.'
-    );
-  }
-
-  return url;
-};
-
-// Connection pool 생성
-const connectionString = getDatabaseUrl();
-
-const client = postgres(connectionString, {
-  max: 10,                    // 최대 연결 수
-  idle_timeout: 20,           // idle 연결 타임아웃 (초)
-  connect_timeout: 10,        // 연결 타임아웃 (초)
-  prepare: false,             // Supabase에서 권장
-});
-
-// Drizzle 인스턴스
-export const db = drizzle(client, { schema });
-
-// 타입 export
-export type DB = typeof db;
-
-// 데이터베이스 연결 설정
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error(
-    'DATABASE_URL 환경 변수가 설정되지 않았습니다. .env 파일에 설정해주세요.'
-  );
-}
-
-// Postgres 연결 생성
-export const connection = postgres(connectionString, {
-  max: 10,
-  idle_timeout: 20,
-  connect_timeout: 10,
-});
-
-// 모든 스키마를 포함한 Drizzle 인스턴스 생성
-export const db = drizzle(connection, {
-  schema: {
-    ...iamSchema,
-    ...orgSchema,
-    ...bizSchema,
-    ...refSchema,
-  },
-});
-
-// 편의를 위한 스키마 재출력
-export * from './schema';
-
-// 타입 헬퍼
-export type Database = typeof db;
+let globalClient: postgres.Sql | null = null;
 
 /**
- * 커스텀 연결 문자열로 새 DB 클라이언트를 생성하는 팩토리 함수
- * Next.js Server Actions에서 요청당 캐싱에 유용함
+ * PostgreSQL 클라이언트 가져오기 (싱글톤 패턴)
  *
- * @param customConnectionString - 선택적 커스텀 연결 문자열
- * @returns 새 Drizzle 데이터베이스 인스턴스
+ * Vercel Serverless 최적화:
+ * - max: 1 (함수당 1개 연결)
+ * - idle_timeout: 5 (5초 후 자동 정리)
+ * - prepare: false (Supabase 권장)
  */
-export function createDbClient(customConnectionString?: string) {
-  const connString = customConnectionString || connectionString;
+function getPostgresClient(): postgres.Sql {
+  if (!globalClient) {
+    const connectionString = process.env.DATABASE_URL;
 
-  if (!connString) {
-    throw new Error('DATABASE_URL이 필요합니다');
+    if (!connectionString) {
+      throw new Error(
+        'DATABASE_URL 환경 변수가 필요합니다.\n\n' +
+        '로컬 개발:\n' +
+        '  postgresql://postgres:postgres@127.0.0.1:54322/postgres\n\n' +
+        '프로덕션 (Supabase Pooler 사용 권장):\n' +
+        '  postgresql://postgres.[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true\n\n' +
+        'Supabase Dashboard > Settings > Database > Connection Pooling에서 확인하세요.'
+      );
+    }
+
+    globalClient = postgres(connectionString, {
+      max: 1,                    // Vercel 권장: 함수당 1개 연결
+      idle_timeout: 5,           // Vercel 권장: 5초 후 자동 정리
+      connect_timeout: 10,       // 연결 타임아웃
+      prepare: false,            // Supabase 권장 (Pooler와 호환)
+    });
+
+    // 개발 환경에서만 연결 정보 로그
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ PostgreSQL 클라이언트 생성됨');
+    }
   }
 
-  const client = postgres(connString, {
-    max: 10,
-    idle_timeout: 20,
-    connect_timeout: 10,
-  });
-
-  return drizzle(client, {
-    schema: {
-      ...iamSchema,
-      ...orgSchema,
-      ...bizSchema,
-      ...refSchema,
-    },
-  });
+  return globalClient;
 }
 
-export type DbClient = ReturnType<typeof createDbClient>;
+/**
+ * 통합 데이터베이스 스키마
+ */
+const schema = {
+  ...iamSchema,
+  ...orgSchema,
+  ...bizSchema,
+  ...refSchema,
+};
+
+/**
+ * 메인 Drizzle ORM 인스턴스
+ *
+ * 전역으로 선언되어 Vercel Fluid Compute에서 재사용됩니다.
+ * 각 요청은 동일한 인스턴스를 공유하여 성능을 최적화합니다.
+ */
+export const db = drizzle(getPostgresClient(), { schema });
+
+/**
+ * 데이터베이스 타입 정의
+ */
+export type Database = typeof db;

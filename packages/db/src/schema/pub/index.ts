@@ -11,3 +11,5 @@
 //   description: 'Public booking summaries for AI consumption',
 //   grants: ['anon', 'ai_bot'],
 // };
+
+export { };
