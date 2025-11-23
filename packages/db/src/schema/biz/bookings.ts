@@ -1,8 +1,9 @@
 import { sql } from 'drizzle-orm';
 import { bigserial, uuid, timestamp, index } from 'drizzle-orm/pg-core';
+
 import { bizSchema } from '../../lib/schemas';
-import { tenants } from '../org/tenants';
 import { users } from '../iam/users';
+import { tenants } from '../org/tenants';
 
 export const bookings = bizSchema.table(
   'bookings',
@@ -25,9 +26,9 @@ export const bookings = bizSchema.table(
     owner_user_id_idx: index('biz_bookings_owner_user_id_index').on(table.ownerUserId),
     tenant_owner_idx: index('biz_bookings_tenant_id_owner_user_id_index').on(
       table.tenantId,
-      table.ownerUserId
+      table.ownerUserId,
     ),
-  })
+  }),
 );
 
 export type Booking = typeof bookings.$inferSelect;

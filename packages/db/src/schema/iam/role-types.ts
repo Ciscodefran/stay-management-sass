@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { bigserial, varchar, text, boolean, timestamp, unique } from 'drizzle-orm/pg-core';
+
 import { iamSchema } from '../../lib/schemas';
 
 export const roleTypes = iamSchema.table(
@@ -18,7 +19,7 @@ export const roleTypes = iamSchema.table(
   },
   (table) => ({
     code_unique: unique('iam_role_types_code_unique').on(table.code),
-  })
+  }),
 );
 
 export type RoleType = typeof roleTypes.$inferSelect;

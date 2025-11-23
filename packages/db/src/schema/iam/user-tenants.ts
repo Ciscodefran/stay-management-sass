@@ -1,9 +1,11 @@
 import { sql } from 'drizzle-orm';
 import { bigserial, uuid, bigint, boolean, timestamp, index, unique } from 'drizzle-orm/pg-core';
+
 import { iamSchema } from '../../lib/schemas';
-import { users } from './users';
-import { roleTypes } from './role-types';
 import { tenants } from '../org/tenants';
+
+import { roleTypes } from './role-types';
+import { users } from './users';
 
 export const userTenants = iamSchema.table(
   'user_tenants',
@@ -26,20 +28,20 @@ export const userTenants = iamSchema.table(
   (table) => ({
     user_tenant_unique: unique('iam_user_tenants_user_tenant_unique').on(
       table.internalUserId,
-      table.tenantId
+      table.tenantId,
     ),
     user_tenant_idx: index('iam_user_tenants_internal_user_id_tenant_id_index').on(
       table.internalUserId,
-      table.tenantId
+      table.tenantId,
     ),
     role_type_id_idx: index('iam_user_tenants_role_type_id_index').on(
-      table.roleTypeId
+      table.roleTypeId,
     ),
     tenant_role_idx: index('iam_user_tenants_tenant_id_role_type_id_index').on(
       table.tenantId,
-      table.roleTypeId
+      table.roleTypeId,
     ),
-  })
+  }),
 );
 
 export type UserTenant = typeof userTenants.$inferSelect;

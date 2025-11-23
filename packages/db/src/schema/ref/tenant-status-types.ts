@@ -1,4 +1,5 @@
 import { bigserial, varchar, text } from 'drizzle-orm/pg-core';
+
 import { refSchema } from '../../lib/schemas';
 
 export const tenantStatusTypes = refSchema.table('tenant_status_types', {

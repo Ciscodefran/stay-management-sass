@@ -1,6 +1,8 @@
 import { sql } from 'drizzle-orm';
 import { uuid, text, timestamp, index, primaryKey } from 'drizzle-orm/pg-core';
+
 import { iamSchema } from '../../lib/schemas';
+
 import { users } from './users';
 
 export const userIdentities = iamSchema.table(
@@ -21,9 +23,9 @@ export const userIdentities = iamSchema.table(
   (table) => ({
     pk: primaryKey({ columns: [table.issuer, table.subject] }),
     internal_user_id_idx: index('iam_user_identities_internal_user_id_index').on(
-      table.internalUserId
+      table.internalUserId,
     ),
-  })
+  }),
 );
 
 export type UserIdentity = typeof userIdentities.$inferSelect;

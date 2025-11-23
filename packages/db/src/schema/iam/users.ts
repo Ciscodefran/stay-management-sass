@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { uuid, text, timestamp } from 'drizzle-orm/pg-core';
+
 import { iamSchema } from '../../lib/schemas';
 
 export const users = iamSchema.table('users', {

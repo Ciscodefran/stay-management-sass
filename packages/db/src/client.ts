@@ -1,8 +1,9 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+
+import * as bizSchema from './schema/biz';
 import * as iamSchema from './schema/iam';
 import * as orgSchema from './schema/org';
-import * as bizSchema from './schema/biz';
 import * as refSchema from './schema/ref';
 
 /**
@@ -30,7 +31,7 @@ function getPostgresClient(): postgres.Sql {
         '  postgresql://postgres:postgres@127.0.0.1:54322/postgres\n\n' +
         '프로덕션 (Supabase Pooler 사용 권장):\n' +
         '  postgresql://postgres.[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true\n\n' +
-        'Supabase Dashboard > Settings > Database > Connection Pooling에서 확인하세요.'
+        'Supabase Dashboard > Settings > Database > Connection Pooling에서 확인하세요.',
       );
     }
 
@@ -43,6 +44,7 @@ function getPostgresClient(): postgres.Sql {
 
     // 개발 환경에서만 연결 정보 로그
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.log('✅ PostgreSQL 클라이언트 생성됨');
     }
   }
