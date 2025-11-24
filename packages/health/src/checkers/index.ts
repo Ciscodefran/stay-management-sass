@@ -1,0 +1,1 @@
+export { databaseChecker } from './database';
